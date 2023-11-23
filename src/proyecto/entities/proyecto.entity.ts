@@ -1,4 +1,4 @@
-import { Equipo } from 'src/equipo/entities/equipo.entity';
+
 import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, CreateDateColumn } from 'typeorm';
 
 
@@ -21,7 +21,7 @@ export class Proyecto {
   @Column({ nullable: false, name: 'creador_id' }) // Nueva columna para almacenar el ID del creador
   creadorId: number;
 
-  @ManyToMany(() => Equipo)
-  @JoinTable()
-  equipos: Equipo[];
+  @Column('int', { array: true, default: [] }) // Usar un array para almacenar IDs de   equipo: number[]; // Lista de IDs de equipo asociados
+  equipo: number[]; // Lista de IDs de equipo asociados
+
 }
