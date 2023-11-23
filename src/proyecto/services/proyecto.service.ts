@@ -1,9 +1,9 @@
-import { Delete, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CrearProyectoDto } from '../dto/create-proyecto.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Proyecto } from '../entities/proyecto.entity';
 import { UpdateProyectoDto } from '../dto/update-proyecto.dto';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class ProyectoService {
@@ -11,7 +11,8 @@ export class ProyectoService {
   constructor(
     @InjectRepository(Proyecto)
     private proyectoRepository: Repository<Proyecto>,
-  ) { }
+  ) {}
+
   async findOneByNombre(nombre: string) {
     const proyecto = this.proyectoRepository.findOne({ where: { nombre } }); \
     return proyecto;
@@ -49,3 +50,4 @@ export class ProyectoService {
     await this.proyectoRepository.remove(proyecto);
   }
 }
+
