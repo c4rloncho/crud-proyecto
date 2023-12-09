@@ -11,6 +11,6 @@ import { ProyectoService } from './services/proyecto.service';
   ],
   controllers: [ProyectoController],
   providers: [ProyectoService],
-  exports: [ProyectoService],
+  exports: [ProyectoService,TypeOrmModule],
 })
 export class ProyectoModule {}

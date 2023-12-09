@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, NotFoundException, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, NotFoundException, Param, Post, Put, Query } from '@nestjs/common';
 import { ProyectoService } from '../services/proyecto.service';
 import { CrearProyectoDto } from '../dto/create-proyecto.dto';
 import { UpdateProyectoDto } from '../dto/update-proyecto.dto';
+import { Proyecto } from '../entities/proyecto.entity';
 
 @Controller('proyecto')
 export class ProyectoController {
@@ -48,6 +49,11 @@ export class ProyectoController {
             }, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+    }
+    // En el controlador del servicio de proyectos
+    @Get('/proyectos-por-ids')
+    getProyectosPorIds(@Query('ids') ids: string[]): Promise<Proyecto[]> {
+    return this.proyectoService.getProyectosPorIds(ids);
     }
 
 }

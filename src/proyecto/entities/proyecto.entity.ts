@@ -22,6 +22,6 @@ export class Proyecto {
   creadorId: number;
 
   @Column('int', { array: true, default: [] }) // Usar un array para almacenar IDs de   equipo: number[]; // Lista de IDs de equipo asociados
-  equipo: number[]; // Lista de IDs de equipo asociados
+  equipos: number[]; // Lista de IDs de equipo asociados
 
 }
