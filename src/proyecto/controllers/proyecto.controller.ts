@@ -50,10 +50,29 @@ export class ProyectoController {
         }
 
     }
-    // En el controlador del servicio de proyectos
-    @Get('/proyectos-por-ids')
-    getProyectosPorIds(@Query('ids') ids: string[]): Promise<Proyecto[]> {
-    return this.proyectoService.getProyectosPorIds(ids);
+    @Get()
+    async findAllByIds(@Query('ids') ids: string): Promise<any[]> {
+        const proyectoIds = ids.split(',').map(id => +id); // Convertir la cadena de IDs a una matriz de números
+        return await this.proyectoService.findAllByIds(proyectoIds);
     }
 
+    @Post('agregar-equipo')
+    async AgregarEquipoProyecto(@Body() body: { proyectoId: number; equipoId: number }) {
+
+        try {
+            const proyecto = await this.proyectoService.AgregarEquipoProyecto(body.proyectoId, body.equipoId);
+            return {
+                proyecto
+            };
+        }
+        catch (error) {
+            throw new HttpException(
+                {
+                    status: HttpStatus.BAD_REQUEST,
+                    error: 'Error al agregar el equipo al proyecto',
+                },
+                HttpStatus.BAD_REQUEST
+            );
+        }
+    }
 }

@@ -9,6 +9,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 @Injectable()
 export class ProyectoService {
 
+
+
   constructor(
     @InjectRepository(Proyecto)
     private proyectoRepository: Repository<Proyecto>,
@@ -16,7 +18,7 @@ export class ProyectoService {
   ) {}
 
   async findOneByNombre(nombre: string) {
-    const proyecto = this.proyectoRepository.findOne({ where: { nombre } }); \
+    const proyecto = this.proyectoRepository.findOne({ where: { nombre } }); 
     return proyecto;
   }
 
@@ -47,36 +49,62 @@ export class ProyectoService {
 
     await this.proyectoRepository.remove(proyecto);
   }
+  async findAllByIds(ids: number[]): Promise<Proyecto[]> {
+    const proyectos = await this.proyectoRepository
+      .createQueryBuilder('proyecto')
+      .where('proyecto.id IN (:...ids)', { ids })
+      .getMany();
 
-  async crearProyecto(createProyecto: CrearProyectoDto) {
-    const equiposInfo = await this.verificarEquipos(createProyecto.equipoIds);
-
-    const newproyecto = await this.proyectoRepository.create({
-      nombre:createProyecto.nombre,
-      descripcion:createProyecto.descripcion,
-    });
-    newproyecto.equipos = equiposInfo;
-    // Verificar la existencia de los equipos antes de crear el proyecto
-    return this.proyectoRepository.save(newproyecto)
+    return proyectos;
   }
 
-  private async verificarEquipos(equipoIds: number[]): Promise<number[]> {
+  async crearProyecto(createProyecto: CrearProyectoDto) {
+    const newproyecto = await this.proyectoRepository.create({
+      nombre: createProyecto.nombre,
+      descripcion: createProyecto.descripcion,
+    });
+  
+    const equiposInfo = await this.AsociarEquipos(createProyecto.equipoIds, newproyecto.id);
+    newproyecto.equipos = equiposInfo;
+  
+    try {
+      // Verificar la existencia de los equipos antes de crear el proyecto
+      await this.proyectoRepository.save(newproyecto);
+      return newproyecto;
+    } catch (error) {
+      throw new HttpException('Error al guardar el proyecto', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private async VerificarEquipo(equipoId:number,proyectoId:number): Promise<boolean>{
+    try{
+    const response = await firstValueFrom(this.httpService.get(`http://localhost:3000/equipos/proyecto/${proyectoId}/equipo/${equipoId}`));
+    if (response.status !== 200) {
+      throw new HttpException(`Error al verificar el equipo con ID ${equipoId}. Respuesta del servicio: ${response.statusText}`, HttpStatus.BAD_REQUEST);
+    }
+  
+      const equipoInfo = response.data;
+      if(equipoInfo){
+        return true;
+      }
+      else {
+        throw new HttpException(`Equipo with ID ${equipoId} no existe...`, HttpStatus.BAD_REQUEST);
+      }
+    }
+    catch(error){
+      throw new HttpException(`Error al verificar el equipo con ID ${equipoId}`, HttpStatus.INTERNAL_SERVER_ERROR);
+     } 
+
+  }
+
+  private async AsociarEquipos(equipoIds: number[],proyectoId:number): Promise<number[]> {
     const equiposInfo: any[] = [];
     for (const equipoId of equipoIds) {
       try {
-        // Realizar solicitud GET al microservicio de equipo para verificar la existencia del equipo
-        const response = await firstValueFrom(this.httpService.get(`http://localhost:3000/equipos/${equipoId}`));
-
-        // Manejar la respuesta según tus necesidades
-        const equipoInfo = response.data;
+        const equipoInfo = await this.VerificarEquipo(equipoId,proyectoId);
         if(equipoInfo){
           equiposInfo.push(equipoId);
         }
-        else {
-          console.warn(`Equipo with ID ${equipoId} does not exist. Skipping...`);
-        }
-        // Realizar alguna lógica adicional si es necesario
-
       } catch (error) {
         // Manejar errores, por ejemplo, si el equipo no existe
         throw new HttpException(
@@ -86,6 +114,27 @@ export class ProyectoService {
       }
     }
     return equiposInfo;
+  }
+  
+
+  async AgregarEquipoProyecto(proyectoId: number, equipoId: number): Promise<Proyecto | null> {
+    try{
+      const proyecto = await this.proyectoRepository.findOne({where:{id: proyectoId}});
+      if(this.VerificarEquipo(equipoId,proyectoId)){ //se asocia automaticamente el proyecto al equipo si es que existe el equipo
+        proyecto.equipos = [...proyecto.equipos,equipoId];
+        await this.proyectoRepository.save(proyecto);
+        return proyecto
+      }
+      else{
+        throw new HttpException('Equipo no encontrado', HttpStatus.BAD_REQUEST);
+      }
+  
+    }     
+    catch(error){
+      throw new HttpException(
+        'error al asociar el equipo', HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 }
 
