@@ -78,7 +78,9 @@ export class ProyectoService {
 
   private async VerificarEquipo(equipoId:number,proyectoId:number): Promise<boolean>{
     try{
-    const response = await firstValueFrom(this.httpService.get(`http://localhost:3000/equipos/proyecto/${proyectoId}/equipo/${equipoId}`));
+    const response = await firstValueFrom(this.httpService.post(`http://localhost:3000/equipos/agregar-proyecto`,{
+      proyectoId:proyectoId, equipoId:equipoId 
+    }));
     if (response.status !== 200) {
       throw new HttpException(`Error al verificar el equipo con ID ${equipoId}. Respuesta del servicio: ${response.statusText}`, HttpStatus.BAD_REQUEST);
     }
@@ -165,10 +167,7 @@ export class ProyectoService {
           // Manejar el caso en el que la desasociación no fue exitosa
           throw new HttpException('Error al desasociar el proyecto del equipo', HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        // Aquí deberías tener una lógica para desasociar el proyecto del equipo
-        // Por ejemplo, podrías llamar a un servicio interno del microservicio de equipos.
-        // Esto dependerá de cómo esté implementada tu lógica de desasociación.
-        // await this.equipoService.desasociarProyectoDeEquipo(equipo.id, proyecto.id);
+
       }
     } 
     catch (error) {
