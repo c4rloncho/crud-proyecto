@@ -75,4 +75,28 @@ export class ProyectoController {
             );
         }
     }
+
+    @Delete(':id')
+    async eliminarProyecto(@Param('id') idProyecto: number) {
+      try {
+        await this.proyectoService.eliminarProyecto(idProyecto);
+        return {
+          message: 'Proyecto eliminado con éxito',
+        };
+      } catch (error) {
+        // Manejar errores, por ejemplo, si el proyecto no se pudo eliminar
+        return {
+          message: 'Error al eliminar el proyecto',
+          error: error.message,
+        };
+      }
+    }
+    @Post('desasociar-equipo')
+    async DesasociarEquipo(@Body() data:{proyectoId:number,equipoId:number}): Promise<void>{
+        return this.proyectoService.DesasociarEquipo(data.proyectoId,data.equipoId);
+    }
+    @Put(':id/editar')
+    async editarProyecto(@Param('id') idProyecto: number, @Body() updateProyectoDto: UpdateProyectoDto): Promise<void> {
+      return this.proyectoService.editarProyecto(idProyecto, updateProyectoDto);
+    }
 }

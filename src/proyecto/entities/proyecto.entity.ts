@@ -15,7 +15,7 @@ export class Proyecto {
   descripcion: string;
 
   // Añadir columna 'fechaCreacion' que registra automáticamente la fecha de creación
-  @CreateDateColumn({ name: 'fecha_creacion' })
+  @CreateDateColumn({ name: 'fecha_creacion', type: 'timestamp' })
   fechaCreacion: Date;
   
   @Column({ nullable: false, name: 'creador_id' }) // Nueva columna para almacenar el ID del creador

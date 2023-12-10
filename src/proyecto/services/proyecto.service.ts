@@ -10,7 +10,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 export class ProyectoService {
 
 
-
   constructor(
     @InjectRepository(Proyecto)
     private proyectoRepository: Repository<Proyecto>,
@@ -62,6 +61,7 @@ export class ProyectoService {
     const newproyecto = await this.proyectoRepository.create({
       nombre: createProyecto.nombre,
       descripcion: createProyecto.descripcion,
+      fechaCreacion: new Date(),
     });
   
     const equiposInfo = await this.AsociarEquipos(createProyecto.equipoIds, newproyecto.id);
@@ -98,11 +98,11 @@ export class ProyectoService {
   }
 
   private async AsociarEquipos(equipoIds: number[],proyectoId:number): Promise<number[]> {
-    const equiposInfo: any[] = [];
+    const equiposInfo: number[] = [];
     for (const equipoId of equipoIds) {
       try {
-        const equipoInfo = await this.VerificarEquipo(equipoId,proyectoId);
-        if(equipoInfo){
+        const existeEquipo = await this.VerificarEquipo(equipoId,proyectoId);
+        if(existeEquipo){
           equiposInfo.push(equipoId);
         }
       } catch (error) {
@@ -134,6 +134,85 @@ export class ProyectoService {
       throw new HttpException(
         'error al asociar el equipo', HttpStatus.INTERNAL_SERVER_ERROR
       );
+    }
+  }
+
+  async eliminarProyecto(idProyecto: number): Promise <void> {
+    try{
+      const proyecto = await this.proyectoRepository.findOne({where :{id: idProyecto}});
+      if(!proyecto){
+        throw new HttpException('proyecto no encontrado',HttpStatus.INTERNAL_SERVER_ERROR)
+      }
+      await this.desasociarProyectoDeEquipos(proyecto)
+      await this.proyectoRepository.delete(idProyecto);
+    }
+    catch(error){
+      throw new HttpException('no se puede eliminar proyecto',HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+
+  }
+  private async desasociarProyectoDeEquipos(proyecto: Proyecto): Promise<void> {
+    try {
+      // Desasociar el proyecto de cada equipo
+      for (const equipoId of proyecto.equipos) {
+        const response = await firstValueFrom(
+          this.httpService.post(
+            `http://localhost:3000/equipos/desasociar-proyecto`,
+            { proyectoId: proyecto.id, equipoId: equipoId }, // equipo solo es una id 
+          ),
+        );
+        if (response.status !== 200) {
+          // Manejar el caso en el que la desasociación no fue exitosa
+          throw new HttpException('Error al desasociar el proyecto del equipo', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        // Aquí deberías tener una lógica para desasociar el proyecto del equipo
+        // Por ejemplo, podrías llamar a un servicio interno del microservicio de equipos.
+        // Esto dependerá de cómo esté implementada tu lógica de desasociación.
+        // await this.equipoService.desasociarProyectoDeEquipo(equipo.id, proyecto.id);
+      }
+    } 
+    catch (error) {
+      throw new HttpException('Error al desasociar el proyecto de los equipos', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+  async DesasociarEquipo(proyectoId: number, equipoId: number): Promise<void> {
+    try{
+      const proyecto = await this.proyectoRepository.findOne({where:{id: proyectoId}});
+      if(!proyecto){
+        throw new HttpException('proyecto no encontrado',HttpStatus.
+        NOT_FOUND);
+      }
+      proyecto.equipos = proyecto.equipos.filter((id) => id!== equipoId);
+      await this.proyectoRepository.save(proyecto);
+    }
+    catch(error){
+      throw new HttpException('Error al desasociar ', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async editarProyecto(idProyecto: number, updateProyectoDto: UpdateProyectoDto): Promise<void> {
+    try {
+      
+      const proyecto = await this.proyectoRepository.findOne({ where: { id: idProyecto } });
+
+      // Verificar si el proyecto existe
+      if (!proyecto) {
+        throw new HttpException(`Proyecto with ID ${idProyecto} not found`, HttpStatus.NOT_FOUND);
+      }
+
+      // Actualizar la descripción y el nombre si se proporcionan en el DTO
+      if (updateProyectoDto.descripcion) {
+        proyecto.descripcion = updateProyectoDto.descripcion;
+      }
+
+      if (updateProyectoDto.nombre) {
+        proyecto.nombre = updateProyectoDto.nombre;
+      }
+
+      // Guardar el proyecto actualizado en la base de datos
+      await this.proyectoRepository.save(proyecto);
+    } catch (error) {
+      throw new HttpException('Error al editar el proyecto', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
