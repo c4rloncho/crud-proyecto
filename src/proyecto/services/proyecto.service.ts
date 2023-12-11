@@ -81,9 +81,6 @@ export class ProyectoService {
     const response = await firstValueFrom(this.httpService.post(`http://localhost:3000/equipos/agregar-proyecto`,{
       proyectoId:proyectoId, equipoId:equipoId 
     }));
-    if (response.status !== 200) {
-      throw new HttpException(`Error al verificar el equipo con ID ${equipoId}. Respuesta del servicio: ${response.statusText}`, HttpStatus.BAD_REQUEST);
-    }
   
       const equipoInfo = response.data;
       if(equipoInfo){

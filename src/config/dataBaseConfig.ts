@@ -3,7 +3,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 const config: TypeOrmModuleOptions = {
     type: 'postgres',
-    host: '192.168.56.1',
+    host: 'localhost',
     port: 5432,
     username: 'admin',
     password: 'admin',
