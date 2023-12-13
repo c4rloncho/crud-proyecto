@@ -24,7 +24,25 @@ export class ProyectoController {
             proyecto,
         };
     }
+    @Post()
+    async create(@Body() crearProyectoDto: CrearProyectoDto) {
+      const proyecto =  this.proyectoService.crearProyecto(crearProyectoDto);
+            return {
+                message: 'Proyecto creado con exito', proyecto
+            };
+        }
+        catch (error) {
+            throw new HttpException({
+                status: HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error al crear el proyecto',
+            }, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
+
+
+
+    /*
     @Delete(':id')
     async deleteProyecto(@Param('id') id: number) {
         await this.proyectoService.deleteProyecto(id);
@@ -99,4 +117,5 @@ export class ProyectoController {
     async editarProyecto(@Param('id') idProyecto: number, @Body() updateProyectoDto: UpdateProyectoDto): Promise<void> {
       return this.proyectoService.editarProyecto(idProyecto, updateProyectoDto);
     }
+    */
 }

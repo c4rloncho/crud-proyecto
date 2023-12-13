@@ -6,6 +6,8 @@ import { UpdateProyectoDto } from '../dto/update-proyecto.dto';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Equipo } from 'src/equipo/entities/equipo.entity';
+import { error } from 'console';
 @Injectable()
 export class ProyectoService {
 
@@ -13,6 +15,7 @@ export class ProyectoService {
   constructor(
     @InjectRepository(Proyecto)
     private proyectoRepository: Repository<Proyecto>,
+    private equipoRepository: Repository<Equipo>,
     private readonly httpService: HttpService,
   ) {}
 
@@ -20,7 +23,27 @@ export class ProyectoService {
     const proyecto = this.proyectoRepository.findOne({ where: { nombre } }); 
     return proyecto;
   }
+  async create(crearProyectoDto: CrearProyectoDto): Promise<Proyecto> {
+    try {
+      const proyecto = await this.proyectoRepository.create({
+      nombre:crearProyectoDto.nombre,
+      descripcion: crearProyectoDto.descripcion,
+      fechaCreacion: new Date(),})
 
+      for(const equipoId of crearProyectoDto.equipoIds){
+        const equipo = await this.equipoRepository.findOne({where:{id:equipoId}})
+        if(!equipo){
+          throw new error
+        }
+        proyecto.equipos = [...proyecto.equipos,equipo];
+      }
+
+      return await this.proyectoRepository.save(proyecto);
+    } catch (error) {
+      // Manejo de errores específicos relacionados con la base de datos o lógica de negocio
+      throw new HttpException('Error en la operación de la base de datos', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 
 
   async updateProyecto(id: number, updateProyectoDto: UpdateProyectoDto): Promise<Proyecto> {
@@ -57,6 +80,8 @@ export class ProyectoService {
     return proyectos;
   }
 
+
+  /*
   async crearProyecto(createProyecto: CrearProyectoDto) {
     const newproyecto = await this.proyectoRepository.create({
       nombre: createProyecto.nombre,
@@ -75,6 +100,7 @@ export class ProyectoService {
       throw new HttpException('Error al guardar el proyecto', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+  */
 
   private async VerificarEquipo(equipoId:number,proyectoId:number): Promise<boolean>{
     try{

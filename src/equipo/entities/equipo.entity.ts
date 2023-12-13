@@ -1,10 +1,9 @@
-
-import { Equipo } from 'src/equipo/entities/equipo.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, CreateDateColumn } from 'typeorm';
-
+import { User } from '../../users/entities/user.entity';
+import { Proyecto } from 'src/proyecto/entities/proyecto.entity';
 
 @Entity()
-export class Proyecto {
+export class Equipo {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -16,13 +15,14 @@ export class Proyecto {
   descripcion: string;
 
   // Añadir columna 'fechaCreacion' que registra automáticamente la fecha de creación
-  @CreateDateColumn({ name: 'fecha_creacion', type: 'timestamp' })
+  @CreateDateColumn({ name: 'fecha_creacion' })
   fechaCreacion: Date;
-  
-  @Column({ nullable: false, name: 'creador_id' }) // Nueva columna para almacenar el ID del creador
-  creadorId: number;
+
+  @ManyToMany(() => User,(user) => user.equipos)
+  users: User[];
+
+ @ManyToMany(() => Proyecto,(proyecto) => proyecto.equipos)
+ proyectos: Proyecto[];
   
 
-  @ManyToMany(() => Equipo, (equipo) => equipo.proyectos)
-  equipos: Equipo[];
 }
